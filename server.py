@@ -31,21 +31,13 @@ def extract_puzzles(pgn_text):
         info_after = engine.analyse(board, chess.engine.Limit(depth=12))
         eval_after = info_after["score"].white().score(mate_score=10000)
 
-        if (
-            eval_before is not None
-            and eval_after is not None
-            and abs(eval_after - eval_before) > 150
-        ):
+        if eval_before is not None and eval_after is not None and abs(eval_after - eval_before) > 80:
             board.pop()
 
             solution = engine.analyse(board, chess.engine.Limit(depth=15))
             best_move = solution["pv"][0]
 
-            analysis = engine.analyse(
-                board,
-                chess.engine.Limit(depth=15),
-                multipv=2
-            )
+            analysis = engine.analyse(board, chess.engine.Limit(depth=15), multipv=2)
             if len(analysis) < 2:
                 board.push(move)
                 continue
@@ -57,7 +49,7 @@ def extract_puzzles(pgn_text):
                 board.push(move)
                 continue
 
-            if abs(best_score - second_score) < 150:
+            if abs(best_score - second_score) < 80:
                 board.push(move)
                 continue
 
@@ -66,7 +58,8 @@ def extract_puzzles(pgn_text):
                 continue
 
             san_move = board.san(best_move)
-            side_to_move = "White" if board.turn == chess.WHITE else "Black"
+            side = "White" if board.turn == chess.WHITE else "Black"
+
             svg_board = chess.svg.board(
                 board=board,
                 size=420,
@@ -76,7 +69,7 @@ def extract_puzzles(pgn_text):
             puzzles.append({
                 "fen": board.fen(),
                 "answer": san_move,
-                "side": side_to_move,
+                "side": side,
                 "svg": svg_board
             })
 

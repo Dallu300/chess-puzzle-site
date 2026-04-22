@@ -2,30 +2,71 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>Chess Puzzle Viewer</title>
+<title>체스 퍼즐</title>
 
 <style>
-body { font-family: sans-serif; text-align: center; background:#f3f3f3; padding:20px; }
-textarea { width:80%; height:200px; }
-#board { margin:20px auto; width:420px; background:white; }
-button { padding:8px 14px; margin:5px; }
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #f3f3f3;
+    padding: 20px;
+  }
+
+  textarea {
+    width: 90%;
+    max-width: 1400px;
+    height: 360px;
+    font-size: 20px;
+  }
+
+  #board {
+    margin: 20px auto;
+    width: 420px;
+    min-height: 420px;
+  }
+
+  button {
+    padding: 10px 18px;
+    font-size: 18px;
+    margin: 8px;
+  }
+
+  input {
+    padding: 10px;
+    font-size: 18px;
+    width: 280px;
+  }
+
+  #info, #result, #status {
+    margin-top: 16px;
+    font-size: 20px;
+  }
+
+  #status {
+    font-weight: bold;
+    color: #444;
+  }
 </style>
 </head>
 
 <body>
 
-<h2>체스 퍼즐</h2>
+<h1>체스 퍼즐</h1>
 
 <textarea id="pgn"></textarea><br>
-<button onclick="load()">퍼즐 생성</button>
+
+<button id="loadBtn" onclick="load()">퍼즐 생성</button>
 <button onclick="next()">다음</button>
 
+<div id="status"></div>
 <div id="board"></div>
 <div id="info"></div>
 
+<br>
+
 <input id="answer" placeholder="정답 입력">
 <button onclick="check()">확인</button>
-<button onclick="show()">정답 보기</button>
+<button onclick="showAnswer()">정답 보기</button>
 
 <div id="result"></div>
 
@@ -35,18 +76,47 @@ button { padding:8px 14px; margin:5px; }
 let puzzles = []
 let index = 0
 
+function normalizeMove(x) {
+  return x.replace(/[+#]/g, "").toLowerCase().trim()
+}
+
 async function load() {
   const pgn = document.getElementById("pgn").value
+  const loadBtn = document.getElementById("loadBtn")
 
-  const res = await fetch("/analyze", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({pgn})
-  })
+  document.getElementById("status").innerText = "생성중..."
+  document.getElementById("result").innerText = ""
+  document.getElementById("info").innerText = ""
+  document.getElementById("board").innerHTML = ""
+  document.getElementById("answer").value = ""
 
-  puzzles = await res.json()
-  index = 0
-  showPuzzle()
+  loadBtn.disabled = true
+
+  try {
+    const res = await fetch("/analyze", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({pgn})
+    })
+
+    puzzles = await res.json()
+    index = 0
+
+    if (!puzzles.length) {
+      document.getElementById("status").innerText = "퍼즐을 찾지 못했음"
+      loadBtn.disabled = false
+      return
+    }
+
+    document.getElementById("status").innerText = "생성 완료"
+    showPuzzle()
+  } catch (e) {
+    document.getElementById("status").innerText = "오류 발생"
+    document.getElementById("result").innerText = "서버 요청 실패"
+    console.error(e)
+  } finally {
+    loadBtn.disabled = false
+  }
 }
 
 function showPuzzle() {
@@ -55,34 +125,40 @@ function showPuzzle() {
   let p = puzzles[index]
   document.getElementById("board").innerHTML = p.svg
   document.getElementById("info").innerText =
-    `${index+1}/${puzzles.length} | ${p.side}`
+    `퍼즐 ${index+1}/${puzzles.length} | ${p.side}`
   document.getElementById("result").innerText = ""
   document.getElementById("answer").value = ""
+  document.getElementById("answer").focus()
 }
 
 function next() {
-  if (index < puzzles.length-1) {
+  if (index < puzzles.length - 1) {
     index++
     showPuzzle()
   }
 }
 
-function norm(x) {
-  return x.replace(/[+#]/g,"").toLowerCase()
-}
-
 function check() {
-  let user = norm(document.getElementById("answer").value)
-  let correct = norm(puzzles[index].answer)
+  if (!puzzles.length) return
+
+  let user = normalizeMove(document.getElementById("answer").value)
+  let correct = normalizeMove(puzzles[index].answer)
 
   document.getElementById("result").innerText =
     user === correct ? "정답" : "오답"
 }
 
-function show() {
+function showAnswer() {
+  if (!puzzles.length) return
   document.getElementById("result").innerText =
     "정답: " + puzzles[index].answer
 }
+
+document.getElementById("answer").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    check()
+  }
+})
 </script>
 
 </body>
