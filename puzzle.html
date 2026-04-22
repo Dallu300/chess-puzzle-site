@@ -53,7 +53,7 @@
 
 <h1>체스 퍼즐</h1>
 
-<textarea id="pgn"></textarea><br>
+<textarea id="pgn" placeholder="여기에 PGN을 붙여넣어라"></textarea><br>
 
 <button id="loadBtn" onclick="load()">퍼즐 생성</button>
 <button onclick="next()">다음</button>
@@ -125,7 +125,7 @@ function showPuzzle() {
   let p = puzzles[index]
   document.getElementById("board").innerHTML = p.svg
   document.getElementById("info").innerText =
-    `퍼즐 ${index+1}/${puzzles.length} | ${p.side}`
+    `퍼즐 ${index + 1}/${puzzles.length} | ${p.side} | ${p.label}`
   document.getElementById("result").innerText = ""
   document.getElementById("answer").value = ""
   document.getElementById("answer").focus()
