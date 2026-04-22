@@ -11,4 +11,4 @@ COPY . .
 
 ENV STOCKFISH_PATH=/usr/games/stockfish
 
-CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:10000"]
+CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:10000", "--timeout", "120"]

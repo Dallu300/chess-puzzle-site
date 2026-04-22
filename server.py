@@ -23,21 +23,21 @@ def extract_puzzles(pgn_text):
     puzzles = []
 
     for move in game.mainline_moves():
-        info_before = engine.analyse(board, chess.engine.Limit(depth=12))
+        info_before = engine.analyse(board, chess.engine.Limit(depth=8))
         eval_before = info_before["score"].white().score(mate_score=10000)
 
         board.push(move)
 
-        info_after = engine.analyse(board, chess.engine.Limit(depth=12))
+        info_after = engine.analyse(board, chess.engine.Limit(depth=8))
         eval_after = info_after["score"].white().score(mate_score=10000)
 
         if eval_before is not None and eval_after is not None and abs(eval_after - eval_before) > 80:
             board.pop()
 
-            solution = engine.analyse(board, chess.engine.Limit(depth=15))
+            solution = engine.analyse(board, chess.engine.Limit(depth=10))
             best_move = solution["pv"][0]
 
-            analysis = engine.analyse(board, chess.engine.Limit(depth=15), multipv=2)
+            analysis = engine.analyse(board, chess.engine.Limit(depth=10), multipv=2)
             if len(analysis) < 2:
                 board.push(move)
                 continue
